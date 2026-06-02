@@ -638,8 +638,8 @@
           <path d="M38 44h14M41 54h8" stroke="#7c5428" stroke-width="4" stroke-linecap="round"/>
         </svg>
         <div>
-          <h1>Kashi's Hogwarts Quest</h1>
-          <p class="subtitle">A seven-trial challenge prepared specially for Kashi, future Hogwarts legend.</p>
+          <h1>Kairah's Hogwarts Quest</h1>
+          <p class="subtitle">A seven-trial challenge prepared specially for Kairah, the one and only HOGWARTS LEGEND.</p>
         </div>
       </div>
       <div class="hud" aria-live="polite">
@@ -702,7 +702,7 @@
           <div id="setupScreen" class="screen active">
             <div class="setup">
               <div class="letter">
-                <strong>Dear Kashi,</strong>
+                <strong>Dear Kairah,</strong>
                 We are pleased to inform you that your magical knowledge has been noticed. Hogwarts has prepared seven trials to test your memory, courage, cleverness, and book-reader instincts.
               </div>
               <div>
@@ -719,7 +719,7 @@
               </div>
               <p class="small">Questions mix book details, film moments, spells, creatures, objects, places, clever character knowledge, and reader-only secrets.</p>
               <div class="actions">
-                <button class="primary" id="startBtn">Begin Kashi's Trial 1</button>
+                <button class="primary" id="startBtn">Begin Kairah's Trial 1</button>
                 <button class="secondary" id="randomBtn">Surprise Me</button>
               </div>
             </div>
@@ -740,7 +740,7 @@
               <div class="feedback" id="feedback">The question is waiting.</div>
               <div class="actions">
                 <button class="primary hidden" id="nextBtn">Next Trial</button>
-                <button class="secondary" id="restartBtn">New Quest for Kashi</button>
+                <button class="secondary" id="restartBtn">New Quest for Kairah</button>
               </div>
             </div>
           </div>
@@ -750,15 +750,15 @@
               <p class="category">Quest complete</p>
               <h2 class="rank" id="rankTitle"></h2>
               <p id="finalMessage"></p>
-              <p class="parent-note">Kashi, I made this quest for you because I love how deeply you know these stories.</p>
+              <p class="parent-note">Kairah, I made this quest for you because I love how deeply you know these stories.</p>
               <div class="report">
                 <div class="stat"><b id="finalScore">0</b><span>Kashi's house points</span></div>
                 <div class="stat"><b id="finalAccuracy">0%</b><span>Accuracy</span></div>
                 <div class="stat"><b id="finalRelics">0</b><span>Relics</span></div>
               </div>
               <div class="actions">
-                <button class="primary" id="againBtn">Challenge Kashi Again</button>
-                <button class="secondary" id="expertBtn">Kashi-Level Expert Remix</button>
+                <button class="primary" id="againBtn">Challenge Kairah Again</button>
+                <button class="secondary" id="expertBtn">Kairah-Level Expert Remix</button>
               </div>
             </div>
           </div>
@@ -779,7 +779,7 @@
     const difficulties = [
       { name: "First-Year", value: 1, detail: "Warm-up magic" },
       { name: "Prefect", value: 2, detail: "Sharp recall" },
-      { name: "Kashi-Level Expert", value: 3, detail: "Deep canon" }
+      { name: "Kairah-Level Expert", value: 3, detail: "Deep canon" }
     ];
 
     const questions = [
@@ -1039,7 +1039,7 @@
       { name: "Reparo", hint: "Try once after a miss", used: false }
     ];
 
-    const playerName = "Kashi";
+    const playerName = "Kairah";
 
     const state = {
       house: houses[0],
