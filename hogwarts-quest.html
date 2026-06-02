@@ -1,0 +1,1326 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kashi's Hogwarts Quest</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f8f1d6;
+      --muted: #c9c0a4;
+      --night: #171925;
+      --stone: #24283a;
+      --panel: rgba(35, 39, 56, 0.88);
+      --line: rgba(248, 241, 214, 0.18);
+      --gold: #f3c95a;
+      --scarlet: #b94145;
+      --green: #3f8f68;
+      --blue: #4a7cc8;
+      --bronze: #c98942;
+      --focus: #8bd8ff;
+      --ok: #7ee787;
+      --bad: #ff8a8a;
+      font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 22% 10%, rgba(243, 201, 90, 0.16), transparent 26rem),
+        radial-gradient(circle at 80% 18%, rgba(74, 124, 200, 0.13), transparent 22rem),
+        linear-gradient(145deg, #11131e 0%, #20243a 47%, #182719 100%);
+      overflow-x: hidden;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .stars {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,0.85) 0 1px, transparent 1.6px),
+        radial-gradient(circle, rgba(243,201,90,0.7) 0 1px, transparent 1.7px);
+      background-position: 0 0, 28px 41px;
+      background-size: 96px 96px, 132px 132px;
+      opacity: 0.4;
+      animation: drift 30s linear infinite;
+    }
+
+    @keyframes drift {
+      to { transform: translateY(96px); }
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem clamp(1rem, 3vw, 2rem);
+      border-bottom: 1px solid var(--line);
+      background: rgba(15, 17, 27, 0.7);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+
+    .brand svg {
+      width: 46px;
+      height: 46px;
+      flex: 0 0 auto;
+      filter: drop-shadow(0 0 14px rgba(243, 201, 90, 0.4));
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(1.25rem, 3vw, 2.15rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 0.25rem;
+      font-size: 0.95rem;
+    }
+
+    .hud {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      min-height: 2.25rem;
+      padding: 0.45rem 0.65rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      white-space: nowrap;
+    }
+
+    main {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: clamp(1rem, 3vw, 2rem);
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.9fr) minmax(320px, 1.35fr);
+      gap: clamp(1rem, 3vw, 2rem);
+      align-items: stretch;
+    }
+
+    .tower,
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.24);
+    }
+
+    .tower {
+      overflow: hidden;
+      min-height: 620px;
+      display: grid;
+      grid-template-rows: minmax(280px, 1fr) auto;
+    }
+
+    .castle-art {
+      width: 100%;
+      height: 100%;
+      min-height: 360px;
+      display: block;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.04), transparent 40%),
+        linear-gradient(180deg, #22273b 0%, #161923 100%);
+    }
+
+    .inventory {
+      padding: 1rem;
+      border-top: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.14);
+    }
+
+    .inventory h2 {
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .items {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .item {
+      aspect-ratio: 1;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      font-size: 1.45rem;
+      filter: grayscale(1);
+      opacity: 0.55;
+      transition: transform 180ms ease, opacity 180ms ease, filter 180ms ease;
+    }
+
+    .item.earned {
+      filter: none;
+      opacity: 1;
+      transform: translateY(-2px);
+      background: rgba(243, 201, 90, 0.12);
+    }
+
+    .panel {
+      padding: clamp(1rem, 3vw, 1.4rem);
+      min-height: 620px;
+      display: grid;
+      align-content: start;
+      gap: 1rem;
+    }
+
+    .setup {
+      display: grid;
+      gap: 1.2rem;
+    }
+
+    .letter {
+      border: 1px solid rgba(243, 201, 90, 0.34);
+      border-radius: 8px;
+      padding: 1rem;
+      background:
+        linear-gradient(180deg, rgba(248, 241, 214, 0.1), rgba(243, 201, 90, 0.04)),
+        rgba(0, 0, 0, 0.16);
+      color: var(--ink);
+      line-height: 1.45;
+    }
+
+    .letter strong {
+      display: block;
+      color: var(--gold);
+      margin-bottom: 0.35rem;
+    }
+
+    .crest-row,
+    .difficulty-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .choice-card,
+    .answer,
+    .spell-button,
+    .primary,
+    .secondary {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.07);
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .choice-card {
+      min-height: 116px;
+      display: grid;
+      place-items: center;
+      gap: 0.45rem;
+      padding: 0.7rem;
+      text-align: center;
+    }
+
+    .house-card {
+      align-content: center;
+      gap: 0.35rem;
+      min-height: 190px;
+    }
+
+    .house-visual {
+      width: min(118px, 100%);
+      aspect-ratio: 1;
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+
+    .house-visual .crest {
+      position: absolute;
+      width: 48px;
+      height: 56px;
+      right: 0;
+      bottom: 0;
+      filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.35));
+    }
+
+    .portrait {
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      border: 2px solid rgba(248, 241, 214, 0.45);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+      background: rgba(0, 0, 0, 0.18);
+      object-fit: cover;
+      display: block;
+    }
+
+    .head-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.2;
+    }
+
+    .credits {
+      color: var(--muted);
+      font-size: 0.75rem;
+      line-height: 1.35;
+    }
+
+    .credits a {
+      color: #c9efff;
+    }
+
+    .choice-card:hover,
+    .answer:hover,
+    .spell-button:hover,
+    .primary:hover,
+    .secondary:hover {
+      transform: translateY(-2px);
+      border-color: rgba(243, 201, 90, 0.7);
+      background: rgba(255, 255, 255, 0.11);
+    }
+
+    .choice-card.selected,
+    .spell-button.active {
+      outline: 2px solid var(--focus);
+      background: rgba(139, 216, 255, 0.11);
+    }
+
+    .crest {
+      width: 52px;
+      height: 64px;
+      display: block;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .section-title h2 {
+      font-size: clamp(1.15rem, 2.2vw, 1.65rem);
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .difficulty-row {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .difficulty-row .choice-card {
+      min-height: 86px;
+    }
+
+    .primary,
+    .secondary {
+      min-height: 3rem;
+      padding: 0.7rem 1rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      font-weight: 700;
+    }
+
+    .primary {
+      border-color: rgba(243, 201, 90, 0.72);
+      background: linear-gradient(180deg, rgba(243, 201, 90, 0.28), rgba(201, 137, 66, 0.22));
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+      align-items: center;
+    }
+
+    .trial-top {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .progress {
+      height: 0.7rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .progress span {
+      display: block;
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold), var(--focus), var(--ok));
+      transition: width 260ms ease;
+    }
+
+    .question {
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    .category {
+      width: fit-content;
+      max-width: 100%;
+      padding: 0.35rem 0.55rem;
+      border-radius: 999px;
+      background: rgba(139, 216, 255, 0.12);
+      border: 1px solid rgba(139, 216, 255, 0.26);
+      color: #c9efff;
+      font-size: 0.85rem;
+    }
+
+    .question h2 {
+      font-size: clamp(1.35rem, 3vw, 2.05rem);
+      line-height: 1.15;
+    }
+
+    .answers {
+      display: grid;
+      gap: 0.7rem;
+      margin-top: 0.2rem;
+    }
+
+    .answer {
+      width: 100%;
+      text-align: left;
+      padding: 0.85rem 1rem;
+      min-height: 3.25rem;
+      line-height: 1.25;
+    }
+
+    .answer.correct {
+      border-color: rgba(126, 231, 135, 0.9);
+      background: rgba(126, 231, 135, 0.14);
+    }
+
+    .answer.wrong {
+      border-color: rgba(255, 138, 138, 0.85);
+      background: rgba(255, 138, 138, 0.12);
+    }
+
+    .answer:disabled {
+      cursor: default;
+    }
+
+    .spell-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.65rem;
+    }
+
+    .spell-button {
+      min-height: 4rem;
+      padding: 0.65rem;
+      display: grid;
+      gap: 0.25rem;
+      text-align: center;
+    }
+
+    .spell-button strong {
+      font-size: 0.95rem;
+    }
+
+    .spell-button span {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .feedback {
+      min-height: 4.6rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0.85rem;
+      background: rgba(0, 0, 0, 0.16);
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .feedback.good {
+      color: #d7ffdc;
+      border-color: rgba(126, 231, 135, 0.45);
+    }
+
+    .feedback.bad {
+      color: #ffd8d8;
+      border-color: rgba(255, 138, 138, 0.45);
+    }
+
+    .final {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .parent-note {
+      border-left: 4px solid var(--gold);
+      padding: 0.8rem 0.9rem;
+      background: rgba(243, 201, 90, 0.1);
+      color: var(--ink);
+      line-height: 1.45;
+    }
+
+    .rank {
+      font-size: clamp(2rem, 7vw, 4rem);
+      line-height: 1;
+      color: var(--gold);
+      text-shadow: 0 0 28px rgba(243, 201, 90, 0.35);
+    }
+
+    .report {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0.85rem;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .stat b {
+      display: block;
+      font-size: 1.55rem;
+      color: var(--ink);
+      margin-bottom: 0.25rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 860px) {
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .hud {
+        justify-content: flex-start;
+      }
+
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        order: -1;
+      }
+
+      .tower {
+        min-height: auto;
+        grid-template-rows: auto auto;
+      }
+
+      .castle-art {
+        min-height: 260px;
+      }
+
+      .panel {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .crest-row,
+      .difficulty-row,
+      .spell-row,
+      .report {
+        grid-template-columns: 1fr;
+      }
+
+      .items {
+        grid-template-columns: repeat(7, minmax(34px, 1fr));
+      }
+
+      .item {
+        font-size: 1.05rem;
+      }
+
+      .house-card {
+        min-height: 150px;
+      }
+
+      .house-visual {
+        width: 96px;
+      }
+
+      .portrait {
+        width: 78px;
+        height: 78px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stars" aria-hidden="true"></div>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <svg viewBox="0 0 90 90" role="img" aria-label="Golden snitch badge">
+          <path d="M45 31c9 0 16 7 16 16S54 63 45 63 29 56 29 47s7-16 16-16Z" fill="#f3c95a"/>
+          <path d="M25 45C10 35 4 24 6 17c12 1 23 8 34 21M65 45c15-10 21-21 19-28-12 1-23 8-34 21" fill="none" stroke="#f8f1d6" stroke-width="5" stroke-linecap="round"/>
+          <path d="M38 44h14M41 54h8" stroke="#7c5428" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <h1>Kashi's Hogwarts Quest</h1>
+          <p class="subtitle">A seven-trial challenge prepared specially for Kashi, future Hogwarts legend.</p>
+        </div>
+      </div>
+      <div class="hud" aria-live="polite">
+        <div class="badge" title="House"><span id="houseIcon">◇</span><b id="houseName">No house</b></div>
+        <div class="badge" title="Kashi's house points">★ <b id="score">0</b></div>
+        <div class="badge" title="Current trial">Trial <b id="trialCount">0/7</b></div>
+      </div>
+    </header>
+
+    <main>
+      <div class="game-layout">
+        <aside class="tower" aria-label="Hogwarts scene and relics">
+          <svg class="castle-art" viewBox="0 0 520 620" role="img" aria-label="Moonlit wizard castle with seven glowing trial windows">
+            <defs>
+              <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+                <stop stop-color="#202940"/>
+                <stop offset="1" stop-color="#10131e"/>
+              </linearGradient>
+              <linearGradient id="stoneGrad" x1="0" x2="1">
+                <stop stop-color="#35364a"/>
+                <stop offset="1" stop-color="#222638"/>
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="4" result="blur"/>
+                <feMerge>
+                  <feMergeNode in="blur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            <rect width="520" height="620" fill="url(#sky)"/>
+            <circle cx="405" cy="90" r="42" fill="#f8f1d6"/>
+            <path d="M0 470c85-37 168-36 249 0s172 44 271-8v158H0Z" fill="#182719"/>
+            <path d="M60 412h400v158H60Z" fill="#24283a"/>
+            <path d="M98 318h96v252H98Z" fill="url(#stoneGrad)"/>
+            <path d="M326 318h96v252h-96Z" fill="url(#stoneGrad)"/>
+            <path d="M210 248h100v322H210Z" fill="url(#stoneGrad)"/>
+            <path d="M80 318l66-120 66 120H80Zm228 0 66-120 66 120H308Zm-116-70 68-128 68 128H192Z" fill="#161923"/>
+            <path d="M130 202V92M374 202V98M260 120V28" stroke="#5b607d" stroke-width="7"/>
+            <path d="M130 92l62 24-62 24V92Zm130-64 72 26-72 28V28Zm114 70 58 22-58 22V98Z" fill="#b94145"/>
+            <g id="trialWindows" filter="url(#glow)">
+              <rect data-window="0" x="124" y="344" width="24" height="42" rx="12" fill="#635739"/>
+              <rect data-window="1" x="162" y="432" width="24" height="42" rx="12" fill="#635739"/>
+              <rect data-window="2" x="248" y="286" width="24" height="42" rx="12" fill="#635739"/>
+              <rect data-window="3" x="248" y="378" width="24" height="42" rx="12" fill="#635739"/>
+              <rect data-window="4" x="248" y="470" width="24" height="42" rx="12" fill="#635739"/>
+              <rect data-window="5" x="334" y="344" width="24" height="42" rx="12" fill="#635739"/>
+              <rect data-window="6" x="372" y="432" width="24" height="42" rx="12" fill="#635739"/>
+            </g>
+            <path d="M52 570h416" stroke="#6f755f" stroke-width="12" stroke-linecap="round"/>
+            <path d="M32 526c42 4 78 0 108-12M380 520c44-18 82-21 114-9" stroke="#405b3b" stroke-width="8" stroke-linecap="round"/>
+          </svg>
+          <div class="inventory">
+            <h2>Relics Won</h2>
+            <div class="items" id="items" aria-label="Won relics"></div>
+          </div>
+        </aside>
+
+        <section class="panel">
+          <div id="setupScreen" class="screen active">
+            <div class="setup">
+              <div class="letter">
+                <strong>Dear Kashi,</strong>
+                We are pleased to inform you that your magical knowledge has been noticed. Hogwarts has prepared seven trials to test your memory, courage, cleverness, and book-reader instincts.
+              </div>
+              <div>
+                <div class="section-title">
+                  <h2>Choose your house</h2>
+                </div>
+                <div class="crest-row" id="houseChoices"></div>
+              </div>
+              <div>
+                <div class="section-title">
+                  <h2>Set the challenge</h2>
+                </div>
+                <div class="difficulty-row" id="difficultyChoices"></div>
+              </div>
+              <p class="small">Questions mix book details, film moments, spells, creatures, objects, places, clever character knowledge, and reader-only secrets.</p>
+              <div class="actions">
+                <button class="primary" id="startBtn">Begin Kashi's Trial 1</button>
+                <button class="secondary" id="randomBtn">Surprise Me</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="playScreen" class="screen">
+            <div class="question">
+              <div class="trial-top">
+                <div>
+                  <span class="category" id="category"></span>
+                  <h2 id="questionText"></h2>
+                </div>
+                <div class="badge">Streak <b id="streak">0</b></div>
+              </div>
+              <div class="progress" aria-label="Quest progress"><span id="progressBar"></span></div>
+              <div class="spell-row" id="spellRow"></div>
+              <div class="answers" id="answers"></div>
+              <div class="feedback" id="feedback">The question is waiting.</div>
+              <div class="actions">
+                <button class="primary hidden" id="nextBtn">Next Trial</button>
+                <button class="secondary" id="restartBtn">New Quest for Kashi</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="finalScreen" class="screen">
+            <div class="final">
+              <p class="category">Quest complete</p>
+              <h2 class="rank" id="rankTitle"></h2>
+              <p id="finalMessage"></p>
+              <p class="parent-note">Kashi, I made this quest for you because I love how deeply you know these stories.</p>
+              <div class="report">
+                <div class="stat"><b id="finalScore">0</b><span>Kashi's house points</span></div>
+                <div class="stat"><b id="finalAccuracy">0%</b><span>Accuracy</span></div>
+                <div class="stat"><b id="finalRelics">0</b><span>Relics</span></div>
+              </div>
+              <div class="actions">
+                <button class="primary" id="againBtn">Challenge Kashi Again</button>
+                <button class="secondary" id="expertBtn">Kashi-Level Expert Remix</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const houses = [
+      { name: "Gryffindor", head: "Professor McGonagall", photo: "assets/mcgonagall.jpeg", icon: "lion", color: "#b94145", trim: "#f3c95a", mark: "◆" },
+      { name: "Hufflepuff", head: "Professor Sprout", photo: "assets/sprout.jpeg", icon: "badger", color: "#f3c95a", trim: "#171925", mark: "●" },
+      { name: "Ravenclaw", head: "Professor Flitwick", photo: "assets/flitwick.jpeg", icon: "eagle", color: "#4a7cc8", trim: "#c98942", mark: "▲" },
+      { name: "Slytherin", head: "Professor Snape", photo: "assets/snape.jpeg", icon: "serpent", color: "#3f8f68", trim: "#d7dde2", mark: "◆" }
+    ];
+
+    const relics = ["🪄", "📜", "🔑", "🏆", "🧪", "🧭", "💎"];
+    const difficulties = [
+      { name: "First-Year", value: 1, detail: "Warm-up magic" },
+      { name: "Prefect", value: 2, detail: "Sharp recall" },
+      { name: "Kashi-Level Expert", value: 3, detail: "Deep canon" }
+    ];
+
+    const questions = [
+      {
+        level: 1,
+        category: "Spells",
+        q: "Which spell opens locked doors in the first book and film?",
+        a: ["Alohomora", "Lumos", "Expelliarmus", "Reparo"],
+        correct: 0,
+        fact: "Alohomora is the unlocking charm Hermione uses when the trio need a quick escape."
+      },
+      {
+        level: 1,
+        category: "Objects",
+        q: "What object shows a person's deepest desire?",
+        a: ["The Mirror of Erised", "The Pensieve", "The Marauder's Map", "The Deluminator"],
+        correct: 0,
+        fact: "Erised is desire spelled backward, just as the mirror's inscription hints."
+      },
+      {
+        level: 1,
+        category: "Creatures",
+        q: "What kind of creature is Buckbeak?",
+        a: ["Hippogriff", "Thestral", "Basilisk", "Hungarian Horntail"],
+        correct: 0,
+        fact: "A hippogriff expects politeness first: bow, wait, then approach."
+      },
+      {
+        level: 1,
+        category: "Hogwarts",
+        q: "Which ghost belongs to Gryffindor Tower?",
+        a: ["Nearly Headless Nick", "The Bloody Baron", "The Fat Friar", "The Grey Lady"],
+        correct: 0,
+        fact: "Sir Nicholas de Mimsy-Porpington is better known as Nearly Headless Nick."
+      },
+      {
+        level: 1,
+        category: "Quidditch",
+        q: "Which ball is worth 150 points when caught?",
+        a: ["Golden Snitch", "Quaffle", "Bludger", "Rememberall"],
+        correct: 0,
+        fact: "Catching the Snitch usually ends the match and adds 150 points."
+      },
+      {
+        level: 1,
+        category: "Places",
+        q: "Where does Harry first buy his wand?",
+        a: ["Ollivanders", "Flourish and Blotts", "Borgin and Burkes", "Madam Malkin's"],
+        correct: 0,
+        fact: "Ollivanders is the famous wand shop in Diagon Alley."
+      },
+      {
+        level: 1,
+        category: "Characters",
+        q: "Who is the Keeper of Keys and Grounds at Hogwarts when Harry arrives?",
+        a: ["Rubeus Hagrid", "Argus Filch", "Remus Lupin", "Filius Flitwick"],
+        correct: 0,
+        fact: "Hagrid brings Harry into the wizarding world and later teaches Care of Magical Creatures."
+      },
+      {
+        level: 2,
+        category: "Books",
+        q: "Which book contains the first appearance of the Triwizard Tournament?",
+        a: ["Goblet of Fire", "Prisoner of Azkaban", "Order of the Phoenix", "Half-Blood Prince"],
+        correct: 0,
+        fact: "The tournament drives the central mystery of the fourth story."
+      },
+      {
+        level: 2,
+        category: "Potions",
+        q: "What potion grants temporary luck?",
+        a: ["Felix Felicis", "Polyjuice Potion", "Amortentia", "Veritaserum"],
+        correct: 0,
+        fact: "Felix Felicis is also called Liquid Luck."
+      },
+      {
+        level: 2,
+        category: "Charms",
+        q: "Which charm summons an object to the caster?",
+        a: ["Accio", "Protego", "Stupefy", "Obliviate"],
+        correct: 0,
+        fact: "Harry famously uses Accio during the first Triwizard task."
+      },
+      {
+        level: 2,
+        category: "Family",
+        q: "What is the name of Ron's youngest sister?",
+        a: ["Ginny", "Molly", "Fleur", "Angelina"],
+        correct: 0,
+        fact: "Ginny Weasley becomes an important student, fighter, and Quidditch player."
+      },
+      {
+        level: 2,
+        category: "Defense",
+        q: "What form does Harry's Patronus take?",
+        a: ["Stag", "Doe", "Otter", "Jack Russell terrier"],
+        correct: 0,
+        fact: "The stag connects Harry to his father, James."
+      },
+      {
+        level: 2,
+        category: "Magical Objects",
+        q: "What does the Marauder's Map show?",
+        a: ["People moving around Hogwarts", "Future exam questions", "Hidden Horcruxes", "Every wand's owner"],
+        correct: 0,
+        fact: "The map tracks named people inside Hogwarts, which makes it both useful and risky."
+      },
+      {
+        level: 2,
+        category: "Films",
+        q: "In the films, who teaches Harry the shield charm for Dumbledore's Army practice?",
+        a: ["Harry himself", "Sirius", "Professor Lupin", "Professor McGonagall"],
+        correct: 0,
+        fact: "Harry trains the group in practical defensive magic in the Room of Requirement."
+      },
+      {
+        level: 2,
+        category: "Creatures",
+        q: "What can only be seen by people who have witnessed death?",
+        a: ["Thestrals", "Pixies", "Kneazles", "Blast-Ended Skrewts"],
+        correct: 0,
+        fact: "Thestrals pull the Hogwarts carriages, but not every student can see them."
+      },
+      {
+        level: 2,
+        category: "Hogwarts",
+        q: "What is the name of Ravenclaw's lost diadem?",
+        a: ["The Diadem of Ravenclaw", "The Crown of Serpents", "The Eagle Circlet", "The Grey Lady's Tiara"],
+        correct: 0,
+        fact: "The diadem is linked to Rowena Ravenclaw and becomes crucial late in the series."
+      },
+      {
+        level: 3,
+        category: "Deep Canon",
+        q: "What false name does Harry use at Bill and Fleur's wedding?",
+        a: ["Barny Weasley", "Barry Winkle", "Bilius Prewett", "Dudley Dursley"],
+        correct: 0,
+        fact: "Harry uses Polyjuice Potion and the name Barny Weasley while in hiding."
+      },
+      {
+        level: 3,
+        category: "Deep Canon",
+        q: "Who originally owned the locket that becomes one of Voldemort's Horcruxes?",
+        a: ["Salazar Slytherin", "Helga Hufflepuff", "Cadmus Peverell", "Phineas Nigellus"],
+        correct: 0,
+        fact: "The locket is a Slytherin heirloom before Voldemort turns it into a Horcrux."
+      },
+      {
+        level: 3,
+        category: "For readers only",
+        q: "What does S.P.E.W. stand for?",
+        a: ["Society for the Promotion of Elfish Welfare", "Students Protecting Every Wizard", "Society for Practical Enchantment Work", "School Patrol for Evil Witches"],
+        correct: 0,
+        fact: "Hermione starts S.P.E.W. after learning more about house-elf treatment."
+      },
+      {
+        level: 3,
+        category: "Potions",
+        q: "Which Half-Blood Prince tip helps Harry with the sopophorous bean in Slughorn's first potion challenge?",
+        a: ["Crush it with the flat side of a silver dagger", "Freeze it before slicing it", "Drop it in whole at the end", "Trade it for powdered moonstone"],
+        correct: 0,
+        fact: "The handwritten note helps Harry get more juice from the bean for the Draught of Living Death."
+      },
+      {
+        level: 3,
+        category: "Characters",
+        q: "What is Tonks's first name?",
+        a: ["Nymphadora", "Andromeda", "Doris", "Mafalda"],
+        correct: 0,
+        fact: "Tonks dislikes being called Nymphadora."
+      },
+      {
+        level: 3,
+        category: "Places",
+        q: "Where is the Room of Requirement entrance located?",
+        a: ["Opposite the tapestry of Barnabas the Barmy", "Behind the Fat Lady's portrait", "Under the Whomping Willow", "Beside the kitchens"],
+        correct: 0,
+        fact: "The user must walk past the blank wall three times while concentrating on what they need."
+      },
+      {
+        level: 3,
+        category: "Deep Canon",
+        q: "Which family owns the house at number twelve, Grimmauld Place?",
+        a: ["The Black family", "The Crouch family", "The Malfoy family", "The Lestrange family"],
+        correct: 0,
+        fact: "Sirius inherits the Black family home, which becomes Order headquarters."
+      },
+      {
+        level: 3,
+        category: "Deep Canon",
+        q: "What is the core of Harry's wand?",
+        a: ["Phoenix feather", "Dragon heartstring", "Unicorn hair", "Thestral tail hair"],
+        correct: 0,
+        fact: "Harry's wand and Voldemort's wand share feather cores from Fawkes."
+      },
+      {
+        level: 3,
+        category: "Deep Canon",
+        q: "Who destroys Hufflepuff's cup?",
+        a: ["Hermione Granger", "Ron Weasley", "Neville Longbottom", "Luna Lovegood"],
+        correct: 0,
+        fact: "Hermione destroys the cup with a basilisk fang in the Chamber of Secrets."
+      },
+      {
+        level: 3,
+        category: "Deep Canon",
+        q: "Who is the Half-Blood Prince?",
+        a: ["Severus Snape", "Tom Riddle", "Regulus Black", "Horace Slughorn"],
+        correct: 0,
+        fact: "Snape's mother was Eileen Prince, which explains the nickname."
+      },
+      {
+        level: 3,
+        category: "Films and Books",
+        q: "Which Horcrux is destroyed by Neville?",
+        a: ["Nagini", "The diary", "The ring", "The locket"],
+        correct: 0,
+        fact: "Neville uses the Sword of Gryffindor to kill Nagini during the Battle of Hogwarts."
+      },
+      {
+        level: 3,
+        category: "For readers only",
+        q: "Who gives Harry the gillyweed in the book version of the second Triwizard task?",
+        a: ["Dobby", "Neville Longbottom", "Mad-Eye Moody", "Cedric Diggory"],
+        correct: 0,
+        fact: "The film gives Neville the helpful moment, but in the book Dobby brings Harry the gillyweed."
+      },
+      {
+        level: 3,
+        category: "For readers only",
+        q: "What is the name of Percy Weasley's owl?",
+        a: ["Hermes", "Errol", "Pigwidgeon", "Arnold"],
+        correct: 0,
+        fact: "Hermes is Percy's owl, while Pigwidgeon belongs to Ron later."
+      },
+      {
+        level: 3,
+        category: "For readers only",
+        q: "What creature does Harry encounter in the maze before it asks him a riddle?",
+        a: ["A sphinx", "A manticore", "A lethifold", "A chimera"],
+        correct: 0,
+        fact: "The sphinx is a book-only maze challenge in Goblet of Fire."
+      },
+      {
+        level: 3,
+        category: "For readers only",
+        q: "What is the name of the joke shop founded by Fred and George?",
+        a: ["Weasleys' Wizard Wheezes", "Weasley & Weasley Wonders", "Zonko's Secret Shelf", "The Burrow Bazaar"],
+        correct: 0,
+        fact: "Weasleys' Wizard Wheezes becomes their Diagon Alley shop."
+      }
+    ];
+
+    const spells = [
+      { name: "Lumos", hint: "Remove one wrong choice", used: false },
+      { name: "Protego", hint: "Protect half your points", used: false },
+      { name: "Reparo", hint: "Try once after a miss", used: false }
+    ];
+
+    const playerName = "Kashi";
+
+    const state = {
+      house: houses[0],
+      difficulty: 2,
+      score: 0,
+      trial: 0,
+      streak: 0,
+      correct: 0,
+      questions: [],
+      answered: false,
+      selectedSpell: null,
+      protected: false,
+      repairReady: false
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function shuffle(items) {
+      return [...items].sort(() => Math.random() - 0.5);
+    }
+
+    function crestSvg(house) {
+      const animal = {
+        lion: '<path d="M25 20c10-7 22-2 25 9 7 4 8 14 1 20-3 10-13 15-24 13C15 60 8 51 10 40 3 31 8 20 18 20c2-7 7-10 7 0Z" fill="' + house.trim + '"/><path d="M28 35h4m11 0h4M31 48c5 4 10 4 15 0" stroke="' + house.color + '" stroke-width="4" stroke-linecap="round" fill="none"/>',
+        badger: '<path d="M13 42c3-16 15-26 32-24 13 2 22 12 24 27-8 14-21 20-37 18-11-1-18-8-19-21Z" fill="' + house.trim + '"/><path d="M24 26c5 11 5 22 0 34M47 19c-3 12-2 24 3 37" stroke="' + house.color + '" stroke-width="5"/><circle cx="36" cy="41" r="3" fill="' + house.color + '"/>',
+        eagle: '<path d="M12 42c16-19 32-22 48-8-12 0-20 5-25 16 12-1 21 2 27 10-18 1-34-4-50-18Z" fill="' + house.trim + '"/><path d="M34 18l12 19-16-3Z" fill="' + house.trim + '"/><path d="M34 39l-9 18M42 37l11 14" stroke="' + house.color + '" stroke-width="4" stroke-linecap="round"/>',
+        serpent: '<path d="M48 16c-19 2-21 18-8 24 14 7 3 21-22 16 15 12 41 7 45-8 3-11-10-15-18-20-5-3-3-8 3-12Z" fill="' + house.trim + '"/><circle cx="49" cy="21" r="2" fill="' + house.color + '"/>'
+      }[house.icon];
+      return '<svg class="crest" viewBox="0 0 80 86" aria-hidden="true"><path d="M40 4 72 16v28c0 20-13 32-32 38C21 76 8 64 8 44V16Z" fill="' + house.color + '" stroke="' + house.trim + '" stroke-width="4"/>' + animal + '</svg>';
+    }
+
+    function headPortraitSvg(house) {
+      return `<img class="portrait" src="${house.photo}" alt="${house.head}" loading="lazy">`;
+    }
+
+    function renderSetup() {
+      $("houseChoices").innerHTML = houses.map((house, index) => `
+        <button class="choice-card house-card ${state.house.name === house.name ? "selected" : ""}" data-house="${index}">
+          <span class="house-visual">
+            ${headPortraitSvg(house)}
+            ${crestSvg(house)}
+          </span>
+          <strong>${house.name}</strong>
+          <span class="head-label">${house.head}</span>
+        </button>
+      `).join("");
+      $("difficultyChoices").innerHTML = difficulties.map((item) => `
+        <button class="choice-card ${state.difficulty === item.value ? "selected" : ""}" data-difficulty="${item.value}">
+          <strong>${item.name}</strong>
+          <span class="small">${item.detail}</span>
+        </button>
+      `).join("");
+    }
+
+    function renderInventory() {
+      $("items").innerHTML = relics.map((item, index) => `<div class="item ${index < state.correct ? "earned" : ""}" title="Relic ${index + 1}">${item}</div>`).join("");
+      document.querySelectorAll("[data-window]").forEach((window) => {
+        const lit = Number(window.dataset.window) < state.correct;
+        window.setAttribute("fill", lit ? "#f3c95a" : "#635739");
+      });
+    }
+
+    function updateHud() {
+      $("houseIcon").textContent = state.house.mark;
+      $("houseName").textContent = state.house.name;
+      $("score").textContent = state.score;
+      const setupVisible = $("setupScreen").classList.contains("active");
+      const playVisible = $("playScreen").classList.contains("active");
+      const visibleTrial = setupVisible ? 0 : playVisible && !state.answered ? state.trial + 1 : state.trial;
+      $("trialCount").textContent = `${Math.min(Math.max(visibleTrial, 0), 7)}/7`;
+      $("streak").textContent = state.streak;
+      $("progressBar").style.width = `${Math.min(state.trial, 7) / 7 * 100}%`;
+      renderInventory();
+    }
+
+    function showScreen(id) {
+      document.querySelectorAll(".screen").forEach((screen) => screen.classList.remove("active"));
+      $(id).classList.add("active");
+    }
+
+    function buildQuest() {
+      const pool = questions.filter((item) => item.level <= state.difficulty);
+      const deep = questions.filter((item) => item.level === 3);
+      const mixed = state.difficulty === 3 ? shuffle([...pool, ...deep]) : shuffle(pool);
+      state.questions = mixed.slice(0, 7).map((question) => {
+        const correctAnswer = question.a[question.correct];
+        const answers = shuffle(question.a);
+        return { ...question, answers, answerIndex: answers.indexOf(correctAnswer) };
+      });
+    }
+
+    function startQuest() {
+      state.score = 0;
+      state.trial = 0;
+      state.streak = 0;
+      state.correct = 0;
+      state.answered = false;
+      state.selectedSpell = null;
+      state.protected = false;
+      state.repairReady = false;
+      spells.forEach((spell) => spell.used = false);
+      buildQuest();
+      showScreen("playScreen");
+      nextQuestion();
+    }
+
+    function renderSpells() {
+      $("spellRow").innerHTML = spells.map((spell, index) => `
+        <button class="spell-button ${state.selectedSpell === index ? "active" : ""}" data-spell="${index}" ${spell.used || state.answered ? "disabled" : ""}>
+          <strong>${spell.name}</strong>
+          <span>${spell.used ? "Used" : spell.hint}</span>
+        </button>
+      `).join("");
+    }
+
+    function nextQuestion() {
+      state.answered = false;
+      state.selectedSpell = null;
+      state.protected = false;
+      state.repairReady = false;
+      $("nextBtn").classList.add("hidden");
+      $("feedback").className = "feedback";
+      $("feedback").textContent = `${playerName}, choose carefully. Some questions are sneaky.`;
+      const current = state.questions[state.trial];
+      if (!current) {
+        finishQuest();
+        return;
+      }
+      $("category").textContent = current.category;
+      $("questionText").textContent = current.q;
+      $("answers").innerHTML = current.answers.map((answer, index) => `<button class="answer" data-answer="${index}">${answer}</button>`).join("");
+      renderSpells();
+      updateHud();
+    }
+
+    function useSpell(index) {
+      if (spells[index].used || state.answered) return;
+      state.selectedSpell = state.selectedSpell === index ? null : index;
+      renderSpells();
+      const current = state.questions[state.trial];
+      if (spells[index].name === "Lumos") {
+        const wrong = [...document.querySelectorAll(".answer")]
+          .filter((button) => Number(button.dataset.answer) !== current.answerIndex);
+        shuffle(wrong).slice(0, 1).forEach((button) => {
+          button.disabled = true;
+          button.style.opacity = "0.42";
+        });
+        spells[index].used = true;
+        state.selectedSpell = null;
+        $("feedback").textContent = "Lumos clears one false trail.";
+      }
+      if (spells[index].name === "Protego") {
+        state.protected = true;
+        spells[index].used = true;
+        state.selectedSpell = null;
+        $("feedback").textContent = "Protego is ready. A miss will cost fewer points.";
+      }
+      if (spells[index].name === "Reparo") {
+        state.repairReady = true;
+        spells[index].used = true;
+        state.selectedSpell = null;
+        $("feedback").textContent = "Reparo is ready. If this answer cracks, you get one more try.";
+      }
+      renderSpells();
+    }
+
+    function answerQuestion(index) {
+      if (state.answered) return;
+      const current = state.questions[state.trial];
+      const buttons = [...document.querySelectorAll(".answer")];
+      const picked = buttons[index];
+      const correct = index === current.answerIndex;
+
+      if (!correct && state.repairReady) {
+        picked.classList.add("wrong");
+        picked.disabled = true;
+        state.repairReady = false;
+        $("feedback").className = "feedback bad";
+        $("feedback").textContent = "Reparo catches the crack. Try another answer.";
+        renderSpells();
+        return;
+      }
+
+      state.answered = true;
+      buttons.forEach((button) => button.disabled = true);
+      buttons[current.answerIndex].classList.add("correct");
+
+      if (correct) {
+        state.correct += 1;
+        state.streak += 1;
+        const points = 10 + (state.difficulty * 3) + Math.min(state.streak, 3) * 2;
+        state.score += points;
+        $("feedback").className = "feedback good";
+        $("feedback").textContent = `${playerName} earns ${points} points for ${state.house.name}. ${current.fact} A new relic glows at Hogwarts.`;
+      } else {
+        picked.classList.add("wrong");
+        state.streak = 0;
+        const loss = state.protected ? 3 : 7;
+        state.score = Math.max(0, state.score - loss);
+        $("feedback").className = "feedback bad";
+        $("feedback").textContent = `Not this time, ${playerName}. ${current.fact} ${state.house.name} loses ${loss} points, but the quest continues.`;
+      }
+
+      state.trial += 1;
+      $("nextBtn").textContent = state.trial >= 7 ? "See Result" : "Next Trial";
+      $("nextBtn").classList.remove("hidden");
+      renderSpells();
+      updateHud();
+    }
+
+    function finishQuest() {
+      showScreen("finalScreen");
+      const accuracy = Math.round((state.correct / 7) * 100);
+      const expert = state.difficulty === 3;
+      let rank = `${playerName}, Keeper of Hidden Canon`;
+      if (accuracy >= 86 && expert) rank = `${playerName}, Defender of Hogwarts`;
+      else if (accuracy >= 86) rank = `${playerName} the Wand Scholar`;
+      else if (accuracy >= 58) rank = `${playerName}, Clever Prefect`;
+
+      $("rankTitle").textContent = rank;
+      $("finalMessage").textContent = accuracy >= 86
+        ? `${playerName}, ${state.house.name} takes the cup. That was proper book-and-film wizardry.`
+        : accuracy >= 58
+          ? `${playerName}, ${state.house.name} earns a proud finish. A few secret passages remain.`
+          : `${playerName}, ${state.house.name} survives the quest. Time for a rematch with sharper spells.`;
+      $("finalScore").textContent = state.score;
+      $("finalAccuracy").textContent = `${accuracy}%`;
+      $("finalRelics").textContent = `${state.correct}/7`;
+      updateHud();
+    }
+
+    $("houseChoices").addEventListener("click", (event) => {
+      const card = event.target.closest("[data-house]");
+      if (!card) return;
+      state.house = houses[Number(card.dataset.house)];
+      renderSetup();
+      updateHud();
+    });
+
+    $("difficultyChoices").addEventListener("click", (event) => {
+      const card = event.target.closest("[data-difficulty]");
+      if (!card) return;
+      state.difficulty = Number(card.dataset.difficulty);
+      renderSetup();
+    });
+
+    $("spellRow").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-spell]");
+      if (!button) return;
+      useSpell(Number(button.dataset.spell));
+    });
+
+    $("answers").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-answer]");
+      if (!button) return;
+      answerQuestion(Number(button.dataset.answer));
+    });
+
+    $("startBtn").addEventListener("click", startQuest);
+    $("randomBtn").addEventListener("click", () => {
+      state.house = houses[Math.floor(Math.random() * houses.length)];
+      state.difficulty = difficulties[Math.floor(Math.random() * difficulties.length)].value;
+      renderSetup();
+      updateHud();
+      startQuest();
+    });
+    $("nextBtn").addEventListener("click", nextQuestion);
+    $("restartBtn").addEventListener("click", () => {
+      showScreen("setupScreen");
+      renderSetup();
+      updateHud();
+    });
+    $("againBtn").addEventListener("click", startQuest);
+    $("expertBtn").addEventListener("click", () => {
+      state.difficulty = 3;
+      startQuest();
+    });
+
+    renderSetup();
+    renderInventory();
+    updateHud();
+  </script>
+</body>
+</html>
